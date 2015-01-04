@@ -3,28 +3,28 @@
 //@Fecha: 28/12/2014
 
 class Enigma{
-	protected $server = 'http://www.underanime.net/api.php';
-	protected $key = 'Dcgx38uuj2h7zvhp8NB9Ukx8';
+	protected $server = 'null';
+	protected $key = 'null';
 	private $cUrl = null;
 	private $error;
 	private $data;
 	private $uri;
-	public function __construct($options = []){
+	public function __construct(){
 		$this->cUrl = curl_init();
-		$default = [
+		$this->options = [
 			CURLOPT_COOKIESESSION => true,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_USERAGENT => 'Enigma Cache Service/1.6',
-			CURLOPT_HTTP200ALIASES => true,
 		];
-		curl_setopt_array($this->cUrl, array_merge($default,$options));
+
 	}
 	protected function sendRequest($uri){
+		$this->options[CURLOPT_URL] = $uri;
+		curl_setopt_array($this->cUrl, $this->options);
 		curl_setopt($this->cUrl, CURLOPT_URL, $uri);
-		var_dump($this->cUrl);
 		$this->data = curl_exec($this->cUrl);
 		if(curl_errno($this->cUrl)>0){
-			$error = ['nro' => curl_errno($this->cUrl), 'msj' => curl_error($this->cUrl)];
+			$this->error = ['nro' => curl_errno($this->cUrl), 'msj' => curl_error($this->cUrl)];
 			return false;
 		}
 		return true;
@@ -45,12 +45,10 @@ class UnderCoreApi extends Enigma{
 	private $data;
 	public function getAnimeList(){
 		$this->uri = "{$this->server}?key={$this->key}&get=animes";
-		$this->data = $this->wwwRequest();
 		return $this;
 	}
 	public function getChapterList($cid){
 		$this->uri = "{$this->server}?key={$this->key}&get=animes";
-		$this->data = $this->wwwRequest();
 		return $this;
 	}
 	public function getCategoryList(){
@@ -74,9 +72,14 @@ class UnderCoreApi extends Enigma{
 		if($this->sendRequest($this->uri)){
 			return $this->getResponse();
 		}
+		return false;
 	}
 	public function getData(){
+		$this->data = $this->wwwRequest();
 		return $this->data;
+	}
+	public function uri() {
+		return $this->uri;
 	}
 }
 define('STATUS_ANY', 0);
@@ -86,6 +89,4 @@ define('TYPE_SERIES', 0);
 define('TYPE_OVAS', 1);
 define('TYPE_MOVIES', 2);
 $enigma = new UnderCoreApi();
-var_dump($enigma->getAnimeList()->setFilter(STATUS_BROADCASTING));
-var_dump($enigma->getData());
-var_dump($enigma->getError());
+var_dump($enigma->getAnimeList()->setFilter(TYPE_MOVIES)->getData());
